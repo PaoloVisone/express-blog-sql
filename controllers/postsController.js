@@ -3,19 +3,17 @@
 const connection = require('../data/db');
 
 function index(req, res) {
-    // copiamo la logica dell'index
 
-    // Bonus
-    //Inizialmente, l'array d'oggetti filtrato corrisponde a quello originale
-    let filteredPost = posts;
+    // prepariamo la query
+    const sql = 'SELECT * FROM posts';
 
-    // Se la richiesta contiene un filtro, allora filtriamo l'array
-    if (req.query.tags) {
-        filteredPost = posts.filter(post => post.tags.includes(req.query.tags));
-    }
-    // restituiamo la variabile filteredMenu
-    // potrebbe essere stata filtrata o contenere l'array originale
-    res.json(filteredPost);
+    // eseguiamo la query!
+    connection.query(sql, (err, results) => {
+        // nel caso di errori
+        if (err) return res.status(500).json({ error: 'Database query failed' });
+        // ritorno dei dati in formato JSON
+        res.json(results);
+    })
 }
 
 function show(req, res) {
