@@ -1,4 +1,6 @@
-const posts = require('../data/posts');
+// const posts = require('../data/posts');
+// Importiamo il file di connessione al database
+const connection = require('../data/db');
 
 function index(req, res) {
     // copiamo la logica dell'index
