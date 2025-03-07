@@ -25,10 +25,30 @@ function show(req, res) {
     // Chiamata al database tramite mysql2
     connection.query(sql, [id], (err, results) => {
         if (err) return res.status(500).json({ error: 'Database query failed' });
+        // Verifica se ci sia il post
         if (results.length === 0) return res.status(404).json({ error: 'Post not found' });
         // Traduce la risposta in un array con un oggetto
-        res.json(results[0]);
-    });
+        // res.json(results[0]);
+
+        // salvo l'oggetto di ritorno 
+        const posts = results[0]
+
+        // Prepariamo la query per i tags aiutandoci con una join e Where
+        const tagsSql = `
+    SELECT T.*
+    FROM tags AS T
+    JOIN post_tag AS PT ON T.id = PT.tag_id
+    WHERE PT.post_id = ?
+    `;
+
+        // Se è andata bene, eseguiamo la seconda query per i tags
+        connection.query(tagsSql, [id], (err, tagsResults) => {
+            if (err) return res.status(500).json({ error: 'Database query failed' });
+            // Aggiungiamo la proprietà tags a posts
+            posts.tags = tagsResults;
+            res.json(posts);
+        })
+    })
 }
 
 function store(req, res) {
@@ -127,32 +147,17 @@ function modify(req, res) {
 };
 
 function destroy(req, res) {
-    // copiamo la logica della destroy..
+    // recuperiamo l'id dall' URL
+    const { id } = req.params;
 
-    // recuperiamo l'id dall' URL e trasformiamolo in numero
-    const id = parseInt(req.params.id)
+    // prepariamo la query
+    const sql = 'DELETE FROM posts WHERE id = ?';
 
-    // cerchiamo il pizza tramite id
-    const post = posts.find(post => post.id === id);
-
-    // Piccolo controllo
-    if (!post) {
-        res.status(404);
-        return res.json({
-            status: 404,
-            error: "Not Found",
-            message: "Post non trovato"
-        })
-    }
-
-    // Rimuoviamo la pizza dal menu
-    posts.splice(posts.indexOf(post), 1);
-
-    // Verifichiamo sul terminale
-    console.log(posts);
-
-    // Restituiamo lo status corretto
-    res.sendStatus(204)
+    //Eliminiamo la pizza dal menu
+    connection.query(sql, [id], (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to delete pizza' });
+        res.sendStatus(204)
+    })
 }
 
 // esportiamo tutto
